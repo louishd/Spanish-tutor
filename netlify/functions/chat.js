@@ -1,5 +1,3 @@
-const fetch = require('node-fetch');
-
 exports.handler = async (event) => {
   // Vérifier que c'est une requête POST
   if (event.httpMethod !== 'POST') {
@@ -70,7 +68,7 @@ RÈGLES IMPORTANTES:
 - Sois naturel comme dans une vraie conversation`
     };
 
-    // Appeler l'API Claude
+    // Appeler l'API Claude avec fetch natif (disponible dans Node 18+)
     const response = await fetch('https://api.anthropic.com/v1/messages', {
       method: 'POST',
       headers: {
