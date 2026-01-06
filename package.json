@@ -1,8 +1,0 @@
-{
-  "name": "spanish-tutor-ai",
-  "version": "1.0.0",
-  "description": "AI-powered Spanish conversation tutor",
-  "dependencies": {
-    "node-fetch": "^2.6.7"
-  }
-}
