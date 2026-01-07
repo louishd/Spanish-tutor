@@ -1,0 +1,597 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Assistant Espagnol IA</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --primary: #2c3e50;
+            --accent: #3498db;
+            --bg: #f8f9fa;
+            --white: #ffffff;
+            --text: #2c3e50;
+            --light-text: #7f8c8d;
+            --border: #e0e0e0;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: var(--bg);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 700px;
+            background: var(--white);
+            border-radius: 12px;
+            box-shadow: 0 2px 20px rgba(0, 0, 0, 0.08);
+            overflow: hidden;
+        }
+
+        .header {
+            padding: 24px 30px;
+            border-bottom: 1px solid var(--border);
+            text-align: center;
+        }
+
+        h1 {
+            color: var(--primary);
+            font-size: 1.5em;
+            font-weight: 600;
+            margin-bottom: 6px;
+        }
+
+        .subtitle {
+            color: var(--light-text);
+            font-size: 0.9em;
+        }
+
+        .level-indicator {
+            display: flex;
+            justify-content: center;
+            gap: 12px;
+            padding: 16px 30px;
+            background: var(--bg);
+        }
+
+        .level-badge {
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-size: 0.85em;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            border: 1px solid var(--border);
+            background: var(--white);
+            color: var(--text);
+        }
+
+        .level-badge.active {
+            background: var(--accent);
+            color: white;
+            border-color: var(--accent);
+        }
+
+        .level-badge:hover:not(.active) {
+            border-color: var(--accent);
+        }
+
+        .chat-container {
+            height: 450px;
+            overflow-y: auto;
+            padding: 30px;
+        }
+
+        .chat-container::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        .chat-container::-webkit-scrollbar-track {
+            background: transparent;
+        }
+
+        .chat-container::-webkit-scrollbar-thumb {
+            background: var(--border);
+            border-radius: 10px;
+        }
+
+        .message {
+            margin-bottom: 24px;
+        }
+
+        .message.user {
+            text-align: right;
+        }
+
+        .message.user .message-content {
+            background: var(--accent);
+            color: white;
+            margin-left: auto;
+        }
+
+        .message-label {
+            font-size: 0.75em;
+            color: var(--light-text);
+            margin-bottom: 6px;
+            font-weight: 500;
+        }
+
+        .message-content {
+            display: inline-block;
+            max-width: 80%;
+            padding: 14px 18px;
+            border-radius: 12px;
+            background: var(--bg);
+            line-height: 1.6;
+        }
+
+        .spanish-text {
+            color: var(--text);
+            margin-bottom: 6px;
+            font-size: 1.05em;
+        }
+
+        .translation {
+            font-size: 0.85em;
+            color: var(--light-text);
+            padding-top: 6px;
+            margin-top: 6px;
+            border-top: 1px solid var(--border);
+        }
+
+        .input-area {
+            padding: 20px 30px;
+            background: var(--white);
+            border-top: 1px solid var(--border);
+        }
+
+        .status-bar {
+            text-align: center;
+            padding: 8px 16px;
+            background: var(--bg);
+            border-radius: 8px;
+            font-size: 0.9em;
+            color: var(--text);
+            font-weight: 500;
+        }
+
+        .input-container {
+            display: flex;
+            gap: 10px;
+        }
+
+        input {
+            flex: 1;
+            padding: 12px 16px;
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            font-size: 0.95em;
+            outline: none;
+            transition: all 0.2s ease;
+        }
+
+        input:focus {
+            border-color: var(--accent);
+        }
+
+        button {
+            padding: 12px 20px;
+            background: var(--accent);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            font-size: 0.95em;
+        }
+
+        button:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        button:not(:disabled):hover {
+            background: #2980b9;
+        }
+
+        button:not(:disabled):active {
+            transform: scale(0.98);
+        }
+
+        .welcome-message {
+            text-align: center;
+            color: var(--light-text);
+            font-size: 0.9em;
+            padding: 20px;
+        }
+
+        .progress-info {
+            text-align: center;
+            padding: 12px 16px;
+            background: var(--bg);
+            border-radius: 8px;
+            margin-bottom: 20px;
+            font-size: 0.85em;
+            color: var(--text);
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>Assistant Espagnol IA</h1>
+            <div class="subtitle">Conversations intelligentes avec Claude</div>
+        </div>
+
+        <div class="level-indicator">
+            <div class="level-badge active" data-level="1">Débutant</div>
+            <div class="level-badge" data-level="2">Intermédiaire</div>
+            <div class="level-badge" data-level="3">Avancé</div>
+        </div>
+
+        <div class="chat-container" id="chatContainer">
+            <div class="progress-info" id="progressInfo">
+                <div>Messages échangés: <strong id="messageCount">0</strong> | Niveau: <strong id="levelName">Débutant</strong></div>
+            </div>
+            <div class="welcome-message">
+                <div id="micStatus" style="font-weight: 500; margin-bottom: 12px; line-height: 1.6;">
+                    ⏳ Vérification du microphone...
+                </div>
+            </div>
+            <div style="text-align: center; margin-top: 30px;">
+                <button id="startBtn" onclick="startConversation()" disabled style="padding: 16px 32px; font-size: 1.1em; opacity: 0.5; cursor: not-allowed;">
+                    Commencer la conversation
+                </button>
+            </div>
+        </div>
+
+        <div class="input-area">
+            <div class="status-bar" id="status">Prêt à commencer</div>
+            <div class="input-container" style="margin-top: 12px; display: none;" id="inputContainer">
+                <input 
+                    type="text" 
+                    id="userInput" 
+                    placeholder="Ou écrivez ici..."
+                    autocomplete="off"
+                >
+                <button onclick="sendMessage()">Envoyer</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let messagesSent = 0;
+        let currentLevel = 1;
+        let isListening = false;
+        let recognition = null;
+        let currentUtterance = null;
+        let autoMode = false;
+        let conversationStarted = false;
+        let conversationHistory = [];
+
+        if ('webkitSpeechRecognition' in window || 'SpeechRecognition' in window) {
+            const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+            recognition = new SpeechRecognition();
+            recognition.lang = 'es-ES';
+            recognition.continuous = false;
+            recognition.interimResults = false;
+
+            recognition.onresult = function(event) {
+                const transcript = event.results[0][0].transcript;
+                addMessage(transcript, 'user');
+                conversationHistory.push({ role: 'user', content: transcript });
+                messagesSent++;
+                updateProgress();
+                
+                generateAIResponse(transcript);
+            };
+
+            recognition.onerror = function(event) {
+                console.error('Erreur de reconnaissance:', event.error);
+                isListening = false;
+                
+                if (event.error === 'not-allowed') {
+                    updateStatus('❌ Microphone bloqué');
+                    autoMode = false;
+                } else if (event.error === 'no-speech') {
+                    updateStatus('Aucune parole détectée');
+                    if (autoMode) {
+                        setTimeout(() => startListening(), 1000);
+                    }
+                } else {
+                    updateStatus('Erreur - Réessayez');
+                    if (autoMode) {
+                        setTimeout(() => startListening(), 2000);
+                    }
+                }
+            };
+
+            recognition.onend = function() {
+                isListening = false;
+            };
+        }
+
+        async function generateAIResponse(userMessage) {
+            updateStatus('Carlos réfléchit...');
+            
+            try {
+                // Appel à votre fonction Netlify (qui garde la clé API secrète)
+                const response = await fetch("/.netlify/functions/chat", {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json",
+                    },
+                    body: JSON.stringify({
+                        level: currentLevel,
+                        history: conversationHistory
+                    })
+                });
+
+                const data = await response.json();
+                
+                if (data.spanish) {
+                    conversationHistory.push({ role: 'assistant', content: data.spanish + (data.french ? '\nFR: ' + data.french : '') });
+                    displayAIMessage(data.spanish, data.french);
+                    
+                    updateStatus('Carlos parle...');
+                    speakText(data.spanish, 'es-ES', 0.75);
+                } else {
+                    updateStatus('Erreur de connexion');
+                    console.error('Erreur API:', data);
+                }
+            } catch (error) {
+                console.error('Erreur lors de l\'appel API:', error);
+                updateStatus('Erreur de connexion à l\'IA');
+            }
+        }
+
+        function displayAIMessage(spanish, french) {
+            let messageHTML = `<div class="spanish-text">${spanish}</div>`;
+            if (french) {
+                messageHTML += `<div class="translation">${french}</div>`;
+            }
+            addMessage(messageHTML, 'assistant');
+        }
+
+        async function startConversation() {
+            if (conversationStarted) return;
+            
+            if (!recognition) {
+                updateStatus('❌ Reconnaissance vocale non supportée');
+                alert('Votre navigateur ne supporte pas la reconnaissance vocale. Veuillez utiliser Chrome ou Safari sur iOS.');
+                return;
+            }
+            
+            conversationStarted = true;
+            autoMode = true;
+            
+            document.getElementById('startBtn').style.display = 'none';
+            document.querySelector('.welcome-message').style.display = 'none';
+            document.getElementById('inputContainer').style.display = 'flex';
+            
+            conversationHistory.push({ 
+                role: 'user', 
+                content: 'Hola' 
+            });
+            
+            updateStatus('Carlos réfléchit...');
+            generateAIResponse('Hola');
+        }
+
+        async function requestMicPermission() {
+            const isSecureContext = window.isSecureContext;
+            
+            if (!isSecureContext) {
+                document.getElementById('micStatus').innerHTML = 
+                    '⚠️ Page non sécurisée (HTTP)<br>' +
+                    '<small style="font-size: 0.85em;">Déployez sur Netlify<br>' +
+                    'pour activer le microphone</small>';
+                document.getElementById('micStatus').style.color = '#e67e22';
+                document.getElementById('startBtn').disabled = true;
+                return false;
+            }
+            
+            try {
+                const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+                stream.getTracks().forEach(track => track.stop());
+                document.getElementById('micStatus').textContent = '✅ Microphone autorisé - Prêt à commencer !';
+                document.getElementById('micStatus').style.color = '#27ae60';
+                const startBtn = document.getElementById('startBtn');
+                startBtn.disabled = false;
+                startBtn.style.opacity = '1';
+                startBtn.style.cursor = 'pointer';
+                return true;
+            } catch (error) {
+                console.error('Permission microphone refusée:', error);
+                document.getElementById('micStatus').innerHTML = 
+                    '❌ Accès microphone refusé<br>' +
+                    '<small style="font-size: 0.85em;">Autorisez le microphone et rechargez</small>';
+                document.getElementById('micStatus').style.color = '#e74c3c';
+                document.getElementById('startBtn').disabled = true;
+                return false;
+            }
+        }
+
+        function speakText(text, lang = 'es-ES', rate = 0.75) {
+            if (currentUtterance) {
+                window.speechSynthesis.cancel();
+            }
+
+            const utterance = new SpeechSynthesisUtterance(text);
+            utterance.lang = lang;
+            utterance.rate = rate;
+            utterance.pitch = 1;
+            utterance.volume = 1;
+
+            utterance.onerror = function(event) {
+                console.error('Speech synthesis error:', event);
+                updateStatus('Erreur de synthèse vocale');
+                if (autoMode && conversationStarted) {
+                    setTimeout(() => startListening(), 500);
+                }
+            };
+
+            utterance.onstart = function() {
+                console.log('Speech started');
+            };
+
+            utterance.onend = function() {
+                console.log('Speech ended');
+                if (autoMode && conversationStarted) {
+                    setTimeout(() => startListening(), 500);
+                }
+            };
+
+            currentUtterance = utterance;
+            
+            // Pour iOS: forcer la lecture
+            try {
+                window.speechSynthesis.cancel(); // Clear any pending
+                window.speechSynthesis.speak(utterance);
+                
+                // Backup pour iOS - relancer si ça ne démarre pas
+                setTimeout(() => {
+                    if (window.speechSynthesis.speaking === false && window.speechSynthesis.pending === false) {
+                        console.log('Retrying speech...');
+                        window.speechSynthesis.speak(utterance);
+                    }
+                }, 100);
+            } catch (error) {
+                console.error('Speech error:', error);
+                updateStatus('Erreur de lecture vocale');
+                if (autoMode && conversationStarted) {
+                    setTimeout(() => startListening(), 500);
+                }
+            }
+        }
+
+        function startListening() {
+            if (!recognition || !autoMode) return;
+
+            if (!isListening) {
+                try {
+                    recognition.start();
+                    isListening = true;
+                    updateStatus('🎤 À votre tour...');
+                } catch (e) {
+                    console.error('Erreur au démarrage:', e);
+                }
+            }
+        }
+
+        function updateStatus(text) {
+            const statusEl = document.getElementById('status');
+            if (statusEl) {
+                statusEl.textContent = text;
+            }
+        }
+
+        function sendMessage() {
+            const input = document.getElementById('userInput');
+            const message = input.value.trim();
+            
+            if (!message) return;
+
+            addMessage(message, 'user');
+            conversationHistory.push({ role: 'user', content: message });
+            input.value = '';
+            
+            messagesSent++;
+            updateProgress();
+
+            generateAIResponse(message);
+        }
+
+        function addMessage(text, sender) {
+            const chatContainer = document.getElementById('chatContainer');
+            const messageDiv = document.createElement('div');
+            messageDiv.className = `message ${sender}`;
+
+            const label = document.createElement('div');
+            label.className = 'message-label';
+            label.textContent = sender === 'user' ? 'Vous' : 'Carlos';
+
+            const content = document.createElement('div');
+            content.className = 'message-content';
+
+            if (sender === 'user') {
+                content.textContent = text;
+            } else {
+                content.innerHTML = text;
+            }
+
+            messageDiv.appendChild(label);
+            messageDiv.appendChild(content);
+            chatContainer.appendChild(messageDiv);
+            chatContainer.scrollTop = chatContainer.scrollHeight;
+        }
+
+        function updateProgress() {
+            document.getElementById('messageCount').textContent = messagesSent;
+            const levelNames = ['Débutant', 'Intermédiaire', 'Avancé'];
+            document.getElementById('levelName').textContent = levelNames[currentLevel - 1];
+        }
+
+        document.querySelectorAll('.level-badge').forEach(badge => {
+            badge.addEventListener('click', function() {
+                if (conversationStarted) {
+                    if (!confirm('Changer de niveau réinitialisera la conversation. Continuer?')) {
+                        return;
+                    }
+                    conversationHistory = [];
+                    messagesSent = 0;
+                    document.getElementById('chatContainer').innerHTML = `
+                        <div class="progress-info" id="progressInfo">
+                            <div>Messages échangés: <strong id="messageCount">0</strong> | Niveau: <strong id="levelName">Débutant</strong></div>
+                        </div>
+                    `;
+                }
+                
+                document.querySelectorAll('.level-badge').forEach(b => b.classList.remove('active'));
+                this.classList.add('active');
+                currentLevel = parseInt(this.dataset.level);
+                updateProgress();
+            });
+        });
+
+        document.getElementById('userInput').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                sendMessage();
+            }
+        });
+
+        window.addEventListener('load', () => {
+            // Unlock audio for iOS
+            const unlockAudio = () => {
+                const utterance = new SpeechSynthesisUtterance('');
+                utterance.volume = 0;
+                window.speechSynthesis.speak(utterance);
+                console.log('Audio unlocked for iOS');
+                document.removeEventListener('touchstart', unlockAudio);
+                document.removeEventListener('click', unlockAudio);
+            };
+            
+            document.addEventListener('touchstart', unlockAudio, { once: true });
+            document.addEventListener('click', unlockAudio, { once: true });
+            
+            setTimeout(() => {
+                requestMicPermission();
+            }, 500);
+        });
+    </script>
+</body>
+</html>
