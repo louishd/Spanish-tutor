@@ -297,18 +297,7 @@
     </div>
 
     <script>
-        let messagesSent = 0;
-        let currentLevel = 1;
-        let currentLanguage = 'spanish'; // 'spanish' or 'english'
-        let isListening = false;
-        let recognition = null;
-        let currentUtterance = null;
-        let autoMode = false;
-        let conversationStarted = false;
-        let conversationHistory = [];
-        let audioUnlocked = false;
-        let isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
-
+        // Define functions FIRST before any variables
         function selectLanguage(language) {
             if (conversationStarted) {
                 if (!confirm('Changer de langue réinitialisera la conversation. Continuer?')) {
@@ -378,6 +367,19 @@
             window.speechSynthesis.cancel();
             window.speechSynthesis.speak(utterance);
         }
+
+        // Variables
+        let messagesSent = 0;
+        let currentLevel = 1;
+        let currentLanguage = 'spanish'; // 'spanish' or 'english'
+        let isListening = false;
+        let recognition = null;
+        let currentUtterance = null;
+        let autoMode = false;
+        let conversationStarted = false;
+        let conversationHistory = [];
+        let audioUnlocked = false;
+        let isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
 
         if ('webkitSpeechRecognition' in window || 'SpeechRecognition' in window) {
             const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
