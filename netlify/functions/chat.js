@@ -30,9 +30,7 @@ RÈGLES IMPORTANTES:
 - Utilise le présent principalement
 - Après ta phrase en espagnol, ajoute sur une nouvelle ligne: "FR: [traduction en français]"
 - Pose des questions simples pour encourager la conversation
-- Sois naturel et amical comme dans une vraie conversation
-- Évite le ton professoral ou robotique
-- Réagis authentiquement à ce que dit l'étudiant
+- Sois naturel et amical
 
 Format de réponse:
 [Ta phrase en espagnol]
@@ -51,8 +49,6 @@ RÈGLES IMPORTANTES:
 - Ajoute la traduction française seulement 50% du temps
 - Quand tu traduis, ajoute "FR: [traduction]" sur une nouvelle ligne
 - Encourage des conversations plus longues
-- Sois naturel comme dans une vraie conversation entre amis
-- Évite le ton professoral, parle comme un ami hispanophone
 
 Format avec traduction (50% du temps):
 [Ta phrase en espagnol]
@@ -69,9 +65,7 @@ RÈGLES IMPORTANTES:
 - N'ajoute JAMAIS de traduction française
 - Utilise tous les temps verbaux
 - Discute de sujets variés et intéressants
-- Sois naturel comme dans une vraie conversation avec un ami hispanophone
-- Partage des opinions, des anecdotes, réagis émotionnellement
-- Évite complètement le ton professoral ou didactique`
+- Sois naturel comme dans une vraie conversation`
     };
 
     const englishPrompts = {
@@ -83,9 +77,7 @@ RÈGLES IMPORTANTES:
 - Utilise le présent principalement
 - Après ta phrase en anglais, ajoute sur une nouvelle ligne: "FR: [traduction en français]"
 - Pose des questions simples pour encourager la conversation
-- Sois naturelle et amicale comme dans une vraie conversation
-- Évite le ton professoral ou robotique
-- Réagis authentiquement à ce que dit l'étudiant
+- Sois naturelle et amicale
 
 Format de réponse:
 [Ta phrase en anglais]
@@ -104,8 +96,6 @@ RÈGLES IMPORTANTES:
 - Ajoute la traduction française seulement 50% du temps
 - Quand tu traduis, ajoute "FR: [traduction]" sur une nouvelle ligne
 - Encourage des conversations plus longues
-- Sois naturelle comme dans une vraie conversation entre amis
-- Évite le ton professoral, parle comme une amie anglophone
 
 Format avec traduction (50% du temps):
 [Ta phrase en anglais]
@@ -122,9 +112,7 @@ RÈGLES IMPORTANTES:
 - N'ajoute JAMAIS de traduction française
 - Utilise tous les temps verbaux
 - Discute de sujets variés et intéressants
-- Sois naturelle comme dans une vraie conversation avec une amie anglophone
-- Partage des opinions, des anecdotes, réagis émotionnellement
-- Évite complètement le ton professoral ou didactique`
+- Sois naturelle comme dans une vraie conversation`
     };
 
     const systemPrompts = language === 'spanish' ? spanishPrompts : englishPrompts;
@@ -138,7 +126,7 @@ RÈGLES IMPORTANTES:
         'anthropic-version': '2023-06-01'
       },
       body: JSON.stringify({
-        model: 'claude-haiku-4-5-20251001',
+        model: 'claude-sonnet-4-20250514',
         max_tokens: 1000,
         system: systemPrompts[level] || systemPrompts[1],
         messages: history
