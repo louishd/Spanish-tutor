@@ -348,7 +348,7 @@
                     displayAIMessage(data.spanish, data.french);
                     
                     updateStatus('Carlos parle...');
-                    speakText(data.spanish, 'es-ES', 0.85);
+                    speakText(data.spanish, 'es-ES', 0.75);
                 } else {
                     updateStatus('Erreur de connexion');
                     console.error('Erreur API:', data);
@@ -426,7 +426,7 @@
             }
         }
 
-        function speakText(text, lang = 'es-ES', rate = 0.85) {
+        function speakText(text, lang = 'es-ES', rate = 0.75) {
             if (currentUtterance) {
                 window.speechSynthesis.cancel();
             }
@@ -434,44 +434,8 @@
             const utterance = new SpeechSynthesisUtterance(text);
             utterance.lang = lang;
             utterance.rate = rate;
-            utterance.pitch = 1.0;
+            utterance.pitch = 1;
             utterance.volume = 1;
-
-            // Sélectionner la meilleure voix disponible pour la langue
-            const voices = window.speechSynthesis.getVoices();
-            const preferredVoice = voices.find(voice => {
-                // Prioriser les voix natives de qualité supérieure
-                if (lang === 'es-ES' || lang === 'es-MX') {
-                    // Pour l'espagnol : préférer les voix iOS/macOS natives
-                    return (voice.lang.startsWith('es') && 
-                           (voice.name.includes('Monica') ||  // Voix espagnole premium iOS
-                            voice.name.includes('Jorge') ||   // Voix espagnole homme iOS
-                            voice.name.includes('Paulina') || // Voix mexicaine iOS
-                            voice.name.includes('Premium') ||
-                            voice.localService));
-                } else if (lang === 'en-US' || lang === 'en-GB') {
-                    // Pour l'anglais : préférer les voix iOS/macOS natives
-                    return (voice.lang.startsWith('en') && 
-                           (voice.name.includes('Samantha') || // Voix anglaise premium iOS
-                            voice.name.includes('Karen') ||    // Voix anglaise iOS
-                            voice.name.includes('Daniel') ||   // Voix anglaise homme iOS
-                            voice.name.includes('Premium') ||
-                            voice.localService));
-                }
-                return false;
-            });
-
-            if (preferredVoice) {
-                utterance.voice = preferredVoice;
-            } else {
-                // Fallback : chercher n'importe quelle voix native pour la langue
-                const fallbackVoice = voices.find(voice => 
-                    voice.lang.startsWith(lang.substring(0, 2)) && voice.localService
-                );
-                if (fallbackVoice) {
-                    utterance.voice = fallbackVoice;
-                }
-            }
 
             utterance.onend = function() {
                 if (autoMode && conversationStarted) {
@@ -579,15 +543,6 @@
         });
 
         window.addEventListener('load', () => {
-            // Charger les voix avant de demander la permission du micro
-            if ('speechSynthesis' in window) {
-                // Force le chargement des voix sur iOS/Safari
-                window.speechSynthesis.getVoices();
-                window.speechSynthesis.onvoiceschanged = () => {
-                    console.log('Voix chargées:', window.speechSynthesis.getVoices().length);
-                };
-            }
-            
             setTimeout(() => {
                 requestMicPermission();
             }, 500);
