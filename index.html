@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Assistant de Langues IA</title>
+    <title>Assistant Espagnol IA</title>
     <style>
         * {
             margin: 0;
@@ -58,37 +58,18 @@
             font-size: 0.9em;
         }
 
-        .selection-area {
-            padding: 20px 30px;
-            background: var(--bg);
-        }
-
-        .selection-section {
-            margin-bottom: 24px;
-        }
-
-        .selection-section:last-child {
-            margin-bottom: 0;
-        }
-
-        .selection-label {
-            text-align: center;
-            margin-bottom: 12px;
-            font-weight: 600;
-            color: var(--text);
-            font-size: 0.95em;
-        }
-
-        .selection-buttons {
+        .level-indicator {
             display: flex;
             justify-content: center;
             gap: 12px;
+            padding: 16px 30px;
+            background: var(--bg);
         }
 
         .level-badge {
-            padding: 10px 20px;
+            padding: 8px 16px;
             border-radius: 20px;
-            font-size: 0.9em;
+            font-size: 0.85em;
             cursor: pointer;
             transition: all 0.2s ease;
             border: 1px solid var(--border);
@@ -110,6 +91,19 @@
             height: 450px;
             overflow-y: auto;
             padding: 30px;
+        }
+
+        .chat-container::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        .chat-container::-webkit-scrollbar-track {
+            background: transparent;
+        }
+
+        .chat-container::-webkit-scrollbar-thumb {
+            background: var(--border);
+            border-radius: 10px;
         }
 
         .message {
@@ -182,9 +176,10 @@
             padding: 12px 16px;
             border: 1px solid var(--border);
             border-radius: 8px;
-            font-family: inherit;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
             font-size: 0.95em;
             outline: none;
+            transition: all 0.2s ease;
         }
 
         input:focus {
@@ -197,7 +192,7 @@
             color: white;
             border: none;
             border-radius: 8px;
-            font-family: inherit;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
             font-weight: 500;
             cursor: pointer;
             transition: all 0.2s ease;
@@ -211,6 +206,10 @@
 
         button:not(:disabled):hover {
             background: #2980b9;
+        }
+
+        button:not(:disabled):active {
+            transform: scale(0.98);
         }
 
         .welcome-message {
@@ -234,31 +233,14 @@
 <body>
     <div class="container">
         <div class="header">
-            <h1>Assistant de Langues IA</h1>
+            <h1>Assistant Espagnol IA</h1>
             <div class="subtitle">Conversations intelligentes avec Claude</div>
         </div>
 
-        <div class="selection-area">
-            <div class="selection-section">
-                <div class="selection-label">Langue à apprendre</div>
-                <div class="selection-buttons">
-                    <div class="level-badge active" id="lang-spanish" onclick="selectLanguage('spanish')">
-                        🇪🇸 Espagnol
-                    </div>
-                    <div class="level-badge" id="lang-english" onclick="selectLanguage('english')">
-                        🇬🇧 Anglais
-                    </div>
-                </div>
-            </div>
-
-            <div class="selection-section">
-                <div class="selection-label">Niveau</div>
-                <div class="selection-buttons">
-                    <div class="level-badge active" data-level="1" onclick="selectLevel(1)">Débutant</div>
-                    <div class="level-badge" data-level="2" onclick="selectLevel(2)">Intermédiaire</div>
-                    <div class="level-badge" data-level="3" onclick="selectLevel(3)">Avancé</div>
-                </div>
-            </div>
+        <div class="level-indicator">
+            <div class="level-badge active" data-level="1">Débutant</div>
+            <div class="level-badge" data-level="2">Intermédiaire</div>
+            <div class="level-badge" data-level="3">Avancé</div>
         </div>
 
         <div class="chat-container" id="chatContainer">
@@ -269,15 +251,9 @@
                 <div id="micStatus" style="font-weight: 500; margin-bottom: 12px; line-height: 1.6;">
                     ⏳ Vérification du microphone...
                 </div>
-                <div id="audioUnlockMsg" style="display: none; margin-top: 20px; padding: 16px; background: #fff3cd; border-radius: 8px; color: #856404; font-size: 0.9em;">
-                    📱 <strong>Sur iPhone :</strong> Touchez le bouton ci-dessous pour activer l'audio
-                </div>
             </div>
             <div style="text-align: center; margin-top: 30px;">
-                <button id="unlockAudioBtn" onclick="unlockAudio()" style="display: none; padding: 14px 28px; background: #f39c12; margin-bottom: 12px;">
-                    🔊 Activer l'audio
-                </button>
-                <button id="startBtn" onclick="startConversation()" disabled style="padding: 16px 32px; font-size: 1.1em;">
+                <button id="startBtn" onclick="startConversation()" disabled style="padding: 16px 32px; font-size: 1.1em; opacity: 0.5; cursor: not-allowed;">
                     Commencer la conversation
                 </button>
             </div>
@@ -286,69 +262,27 @@
         <div class="input-area">
             <div class="status-bar" id="status">Prêt à commencer</div>
             <div class="input-container" style="margin-top: 12px; display: none;" id="inputContainer">
-                <input type="text" id="userInput" placeholder="Ou écrivez ici..." autocomplete="off">
+                <input 
+                    type="text" 
+                    id="userInput" 
+                    placeholder="Ou écrivez ici..."
+                    autocomplete="off"
+                >
                 <button onclick="sendMessage()">Envoyer</button>
             </div>
         </div>
     </div>
 
     <script>
-        // Global variables
         let messagesSent = 0;
         let currentLevel = 1;
-        let currentLanguage = 'spanish';
         let isListening = false;
         let recognition = null;
         let currentUtterance = null;
         let autoMode = false;
         let conversationStarted = false;
         let conversationHistory = [];
-        let audioUnlocked = false;
-        let isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
 
-        // Language selection
-        function selectLanguage(language) {
-            currentLanguage = language;
-            document.getElementById('lang-spanish').classList.remove('active');
-            document.getElementById('lang-english').classList.remove('active');
-            document.getElementById('lang-' + language).classList.add('active');
-            
-            if (recognition) {
-                recognition.lang = language === 'spanish' ? 'es-ES' : 'en-US';
-            }
-            console.log('Language:', language);
-        }
-
-        // Level selection
-        function selectLevel(level) {
-            currentLevel = level;
-            document.querySelectorAll('[data-level]').forEach(b => b.classList.remove('active'));
-            document.querySelector(`[data-level="${level}"]`).classList.add('active');
-            updateProgress();
-            console.log('Level:', level);
-        }
-
-        // Audio unlock for iOS
-        function unlockAudio() {
-            const utterance = new SpeechSynthesisUtterance('Audio activé');
-            utterance.lang = 'fr-FR';
-            utterance.volume = 1;
-            
-            utterance.onstart = function() {
-                audioUnlocked = true;
-                document.getElementById('unlockAudioBtn').textContent = '✅ Audio activé';
-                document.getElementById('unlockAudioBtn').style.background = '#27ae60';
-                setTimeout(() => {
-                    document.getElementById('unlockAudioBtn').style.display = 'none';
-                    document.getElementById('audioUnlockMsg').style.display = 'none';
-                }, 2000);
-            };
-            
-            window.speechSynthesis.cancel();
-            window.speechSynthesis.speak(utterance);
-        }
-
-        // Speech recognition setup
         if ('webkitSpeechRecognition' in window || 'SpeechRecognition' in window) {
             const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
             recognition = new SpeechRecognition();
@@ -362,14 +296,27 @@
                 conversationHistory.push({ role: 'user', content: transcript });
                 messagesSent++;
                 updateProgress();
+                
                 generateAIResponse(transcript);
             };
 
             recognition.onerror = function(event) {
-                console.error('Recognition error:', event.error);
+                console.error('Erreur de reconnaissance:', event.error);
                 isListening = false;
-                if (autoMode && event.error !== 'not-allowed') {
-                    setTimeout(() => startListening(), 1500);
+                
+                if (event.error === 'not-allowed') {
+                    updateStatus('❌ Microphone bloqué');
+                    autoMode = false;
+                } else if (event.error === 'no-speech') {
+                    updateStatus('Aucune parole détectée');
+                    if (autoMode) {
+                        setTimeout(() => startListening(), 1000);
+                    }
+                } else {
+                    updateStatus('Erreur - Réessayez');
+                    if (autoMode) {
+                        setTimeout(() => startListening(), 2000);
+                    }
                 }
             };
 
@@ -378,9 +325,56 @@
             };
         }
 
-        // Start conversation
+        async function generateAIResponse(userMessage) {
+            updateStatus('Carlos réfléchit...');
+            
+            try {
+                // Appel à votre fonction Netlify (qui garde la clé API secrète)
+                const response = await fetch("/.netlify/functions/chat", {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json",
+                    },
+                    body: JSON.stringify({
+                        level: currentLevel,
+                        history: conversationHistory
+                    })
+                });
+
+                const data = await response.json();
+                
+                if (data.spanish) {
+                    conversationHistory.push({ role: 'assistant', content: data.spanish + (data.french ? '\nFR: ' + data.french : '') });
+                    displayAIMessage(data.spanish, data.french);
+                    
+                    updateStatus('Carlos parle...');
+                    speakText(data.spanish, 'es-ES', 0.85);
+                } else {
+                    updateStatus('Erreur de connexion');
+                    console.error('Erreur API:', data);
+                }
+            } catch (error) {
+                console.error('Erreur lors de l\'appel API:', error);
+                updateStatus('Erreur de connexion à l\'IA');
+            }
+        }
+
+        function displayAIMessage(spanish, french) {
+            let messageHTML = `<div class="spanish-text">${spanish}</div>`;
+            if (french) {
+                messageHTML += `<div class="translation">${french}</div>`;
+            }
+            addMessage(messageHTML, 'assistant');
+        }
+
         async function startConversation() {
             if (conversationStarted) return;
+            
+            if (!recognition) {
+                updateStatus('❌ Reconnaissance vocale non supportée');
+                alert('Votre navigateur ne supporte pas la reconnaissance vocale. Veuillez utiliser Chrome ou Safari sur iOS.');
+                return;
+            }
             
             conversationStarted = true;
             autoMode = true;
@@ -389,173 +383,214 @@
             document.querySelector('.welcome-message').style.display = 'none';
             document.getElementById('inputContainer').style.display = 'flex';
             
-            conversationHistory.push({ role: 'user', content: 'Hola' });
-            updateStatus('Démarrage...');
+            conversationHistory.push({ 
+                role: 'user', 
+                content: 'Hola' 
+            });
+            
+            updateStatus('Carlos réfléchit...');
             generateAIResponse('Hola');
         }
 
-        // Request microphone permission
         async function requestMicPermission() {
+            const isSecureContext = window.isSecureContext;
+            
+            if (!isSecureContext) {
+                document.getElementById('micStatus').innerHTML = 
+                    '⚠️ Page non sécurisée (HTTP)<br>' +
+                    '<small style="font-size: 0.85em;">Déployez sur Netlify<br>' +
+                    'pour activer le microphone</small>';
+                document.getElementById('micStatus').style.color = '#e67e22';
+                document.getElementById('startBtn').disabled = true;
+                return false;
+            }
+            
             try {
                 const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
                 stream.getTracks().forEach(track => track.stop());
-                document.getElementById('micStatus').textContent = '✅ Microphone autorisé';
+                document.getElementById('micStatus').textContent = '✅ Microphone autorisé - Prêt à commencer !';
                 document.getElementById('micStatus').style.color = '#27ae60';
-                document.getElementById('startBtn').disabled = false;
-                document.getElementById('startBtn').style.opacity = '1';
-                
-                if (isIOS) {
-                    document.getElementById('audioUnlockMsg').style.display = 'block';
-                    document.getElementById('unlockAudioBtn').style.display = 'inline-block';
-                }
+                const startBtn = document.getElementById('startBtn');
+                startBtn.disabled = false;
+                startBtn.style.opacity = '1';
+                startBtn.style.cursor = 'pointer';
+                return true;
             } catch (error) {
-                document.getElementById('micStatus').innerHTML = '❌ Accès microphone refusé';
+                console.error('Permission microphone refusée:', error);
+                document.getElementById('micStatus').innerHTML = 
+                    '❌ Accès microphone refusé<br>' +
+                    '<small style="font-size: 0.85em;">Autorisez le microphone et rechargez</small>';
                 document.getElementById('micStatus').style.color = '#e74c3c';
+                document.getElementById('startBtn').disabled = true;
+                return false;
             }
         }
 
-        // Generate AI response
-        async function generateAIResponse(userMessage) {
-            const teacherName = currentLanguage === 'spanish' ? 'Carlos' : 'Sarah';
-            updateStatus(`${teacherName} réfléchit...`);
-            
-            try {
-                const response = await fetch("/.netlify/functions/chat", {
-                    method: "POST",
-                    headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify({
-                        level: currentLevel,
-                        language: currentLanguage,
-                        history: conversationHistory
-                    })
-                });
-
-                const data = await response.json();
-                
-                if (currentLanguage === 'spanish' && data.spanish) {
-                    conversationHistory.push({ role: 'assistant', content: data.spanish + (data.french ? '\nFR: ' + data.french : '') });
-                    displayAIMessage(data.spanish, data.french);
-                    speakBothLanguages(data.spanish, data.french, 'es-ES');
-                } else if (currentLanguage === 'english' && data.english) {
-                    conversationHistory.push({ role: 'assistant', content: data.english + (data.french ? '\nFR: ' + data.french : '') });
-                    displayAIMessage(data.english, data.french);
-                    speakBothLanguages(data.english, data.french, 'en-US');
-                } else {
-                    updateStatus('Erreur de connexion');
-                }
-            } catch (error) {
-                console.error('API error:', error);
-                updateStatus('Erreur de connexion');
+        function speakText(text, lang = 'es-ES', rate = 0.85) {
+            if (currentUtterance) {
+                window.speechSynthesis.cancel();
             }
-        }
 
-        // Display AI message
-        function displayAIMessage(text, translation) {
-            let html = `<div class="spanish-text">${text}</div>`;
-            if (translation) html += `<div class="translation">${translation}</div>`;
-            addMessage(html, 'assistant');
-        }
-
-        // Speak both languages
-        function speakBothLanguages(text, translation, lang) {
-            window.speechSynthesis.cancel();
-            
             const utterance = new SpeechSynthesisUtterance(text);
             utterance.lang = lang;
-            utterance.rate = 0.9;
-            utterance.pitch = 0.95;
-            
+            utterance.rate = rate;
+            utterance.pitch = 1.0;
+            utterance.volume = 1;
+
+            // Sélectionner la meilleure voix disponible pour la langue
+            const voices = window.speechSynthesis.getVoices();
+            const preferredVoice = voices.find(voice => {
+                // Prioriser les voix natives de qualité supérieure
+                if (lang === 'es-ES' || lang === 'es-MX') {
+                    // Pour l'espagnol : préférer les voix iOS/macOS natives
+                    return (voice.lang.startsWith('es') && 
+                           (voice.name.includes('Monica') ||  // Voix espagnole premium iOS
+                            voice.name.includes('Jorge') ||   // Voix espagnole homme iOS
+                            voice.name.includes('Paulina') || // Voix mexicaine iOS
+                            voice.name.includes('Premium') ||
+                            voice.localService));
+                } else if (lang === 'en-US' || lang === 'en-GB') {
+                    // Pour l'anglais : préférer les voix iOS/macOS natives
+                    return (voice.lang.startsWith('en') && 
+                           (voice.name.includes('Samantha') || // Voix anglaise premium iOS
+                            voice.name.includes('Karen') ||    // Voix anglaise iOS
+                            voice.name.includes('Daniel') ||   // Voix anglaise homme iOS
+                            voice.name.includes('Premium') ||
+                            voice.localService));
+                }
+                return false;
+            });
+
+            if (preferredVoice) {
+                utterance.voice = preferredVoice;
+            } else {
+                // Fallback : chercher n'importe quelle voix native pour la langue
+                const fallbackVoice = voices.find(voice => 
+                    voice.lang.startsWith(lang.substring(0, 2)) && voice.localService
+                );
+                if (fallbackVoice) {
+                    utterance.voice = fallbackVoice;
+                }
+            }
+
             utterance.onend = function() {
-                if (translation) {
-                    const frUtterance = new SpeechSynthesisUtterance(translation);
-                    frUtterance.lang = 'fr-FR';
-                    frUtterance.rate = 0.95;
-                    frUtterance.pitch = 0.95;
-                    
-                    frUtterance.onend = function() {
-                        if (autoMode && conversationStarted) {
-                            setTimeout(() => startListening(), 800);
-                        }
-                    };
-                    
-                    setTimeout(() => window.speechSynthesis.speak(frUtterance), 400);
-                } else if (autoMode && conversationStarted) {
-                    setTimeout(() => startListening(), 800);
+                if (autoMode && conversationStarted) {
+                    setTimeout(() => startListening(), 500);
                 }
             };
-            
+
+            currentUtterance = utterance;
             window.speechSynthesis.speak(utterance);
         }
 
-        // Start listening
         function startListening() {
-            if (!recognition || !autoMode || isListening) return;
-            
-            try {
-                recognition.start();
-                isListening = true;
-                updateStatus('🎤 À votre tour !');
-            } catch (e) {
-                console.error('Start listening error:', e);
+            if (!recognition || !autoMode) return;
+
+            if (!isListening) {
+                try {
+                    recognition.start();
+                    isListening = true;
+                    updateStatus('🎤 À votre tour...');
+                } catch (e) {
+                    console.error('Erreur au démarrage:', e);
+                }
             }
         }
 
-        // UI helpers
         function updateStatus(text) {
-            document.getElementById('status').textContent = text;
-        }
-
-        function addMessage(text, sender) {
-            const container = document.getElementById('chatContainer');
-            const div = document.createElement('div');
-            div.className = `message ${sender}`;
-            
-            const label = document.createElement('div');
-            label.className = 'message-label';
-            label.textContent = sender === 'user' ? 'Vous' : (currentLanguage === 'spanish' ? 'Carlos' : 'Sarah');
-            
-            const content = document.createElement('div');
-            content.className = 'message-content';
-            if (sender === 'user') content.textContent = text;
-            else content.innerHTML = text;
-            
-            div.appendChild(label);
-            div.appendChild(content);
-            container.appendChild(div);
-            container.scrollTop = container.scrollHeight;
-        }
-
-        function updateProgress() {
-            document.getElementById('messageCount').textContent = messagesSent;
-            const levels = ['Débutant', 'Intermédiaire', 'Avancé'];
-            document.getElementById('levelName').textContent = levels[currentLevel - 1];
+            const statusEl = document.getElementById('status');
+            if (statusEl) {
+                statusEl.textContent = text;
+            }
         }
 
         function sendMessage() {
             const input = document.getElementById('userInput');
             const message = input.value.trim();
-            if (!message) return;
             
+            if (!message) return;
+
             addMessage(message, 'user');
             conversationHistory.push({ role: 'user', content: message });
             input.value = '';
+            
             messagesSent++;
             updateProgress();
+
             generateAIResponse(message);
         }
 
-        // Event listeners
+        function addMessage(text, sender) {
+            const chatContainer = document.getElementById('chatContainer');
+            const messageDiv = document.createElement('div');
+            messageDiv.className = `message ${sender}`;
+
+            const label = document.createElement('div');
+            label.className = 'message-label';
+            label.textContent = sender === 'user' ? 'Vous' : 'Carlos';
+
+            const content = document.createElement('div');
+            content.className = 'message-content';
+
+            if (sender === 'user') {
+                content.textContent = text;
+            } else {
+                content.innerHTML = text;
+            }
+
+            messageDiv.appendChild(label);
+            messageDiv.appendChild(content);
+            chatContainer.appendChild(messageDiv);
+            chatContainer.scrollTop = chatContainer.scrollHeight;
+        }
+
+        function updateProgress() {
+            document.getElementById('messageCount').textContent = messagesSent;
+            const levelNames = ['Débutant', 'Intermédiaire', 'Avancé'];
+            document.getElementById('levelName').textContent = levelNames[currentLevel - 1];
+        }
+
+        document.querySelectorAll('.level-badge').forEach(badge => {
+            badge.addEventListener('click', function() {
+                if (conversationStarted) {
+                    if (!confirm('Changer de niveau réinitialisera la conversation. Continuer?')) {
+                        return;
+                    }
+                    conversationHistory = [];
+                    messagesSent = 0;
+                    document.getElementById('chatContainer').innerHTML = `
+                        <div class="progress-info" id="progressInfo">
+                            <div>Messages échangés: <strong id="messageCount">0</strong> | Niveau: <strong id="levelName">Débutant</strong></div>
+                        </div>
+                    `;
+                }
+                
+                document.querySelectorAll('.level-badge').forEach(b => b.classList.remove('active'));
+                this.classList.add('active');
+                currentLevel = parseInt(this.dataset.level);
+                updateProgress();
+            });
+        });
+
         document.getElementById('userInput').addEventListener('keypress', function(e) {
-            if (e.key === 'Enter') sendMessage();
+            if (e.key === 'Enter') {
+                sendMessage();
+            }
         });
 
         window.addEventListener('load', () => {
+            // Charger les voix avant de demander la permission du micro
             if ('speechSynthesis' in window) {
-                window.speechSynthesis.onvoiceschanged = function() {
-                    console.log('Voices loaded');
+                // Force le chargement des voix sur iOS/Safari
+                window.speechSynthesis.getVoices();
+                window.speechSynthesis.onvoiceschanged = () => {
+                    console.log('Voix chargées:', window.speechSynthesis.getVoices().length);
                 };
             }
-            setTimeout(() => requestMicPermission(), 500);
+            
+            setTimeout(() => {
+                requestMicPermission();
+            }, 500);
         });
     </script>
 </body>
