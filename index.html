@@ -326,28 +326,20 @@ async function startHandsFree() {
 
   dataArray = new Uint8Array(analyser.fftSize);
   
-    function loopVAD() {
-  // DEBUG: afficher l'état dans la barre de status
-  const level = rmsLevel();
-  const debugInfo = `VAD: ${level.toFixed(3)} | Rec: ${isRecording} | TTS: ${ttsSpeaking}`;
-  
-  if (useHandsFree && !ttsSpeaking) {
-    updateStatus(debugInfo);
-  }
-
+   function loopVAD() {
+  // iPhone: si on n'est pas en mode hands-free, ou si l'IA parle, on attend
   if (!useHandsFree || !vadEnabled || ttsSpeaking) {
     setTimeout(loopVAD, VAD.tickMs);
     return;
   }
 
-  const speaking = level > VAD.threshold;
+  const speaking = rmsLevel() > VAD.threshold;
 
   if (!isRecording) {
     silenceMs = speaking ? silenceMs + VAD.tickMs : 0;
     if (silenceMs >= VAD.startMs) {
       silenceMs = 0;
       startAutoRecording();
-      updateStatus('🎤 ENREGISTREMENT...');
     }
   } else {
     silenceMs = !speaking ? silenceMs + VAD.tickMs : 0;
@@ -359,7 +351,6 @@ async function startHandsFree() {
 
   setTimeout(loopVAD, VAD.tickMs);
 }
-
 function startAutoRecording() {
   chunks = [];
   mediaRecorder = new MediaRecorder(micStream);
