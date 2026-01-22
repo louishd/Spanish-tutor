@@ -1,181 +1,162 @@
 exports.handler = async (event) => {
-  // Vérifier que c'est une requête POST
-  if (event.httpMethod !== 'POST') {
-    return {
-      statusCode: 405,
-      body: JSON.stringify({ error: 'Method not allowed' })
-    };
+  if (event.httpMethod !== "POST") {
+    return { statusCode: 405, body: "Method Not Allowed" };
   }
 
   try {
-    const { level, language, history } = JSON.parse(event.body);
-    
-    // Votre clé API Anthropic (elle sera sécurisée dans les variables d'environnement Netlify)
+    const { level = 1, language = "spanish", history = [] } = JSON.parse(event.body);
+
     const ANTHROPIC_API_KEY = process.env.ANTHROPIC_API_KEY;
-    
     if (!ANTHROPIC_API_KEY) {
-      return {
-        statusCode: 500,
-        body: JSON.stringify({ error: 'API key not configured' })
-      };
+      return { statusCode: 500, body: "Anthropic API key missing" };
     }
 
-    // Définir les prompts selon le niveau ET la langue
+    /* ======================================================
+       PROMPTS COMPRESSÉS — LOGIQUE IDENTIQUE AUX TIENS
+       ====================================================== */
+
     const spanishPrompts = {
-      1: `Tu es Carlos, un professeur d'espagnol patient et encourageant pour débutants. 
+  1: `
+Tu es Carlos, professeur d'espagnol pour débutants absolus.
 
-RÈGLES IMPORTANTES:
-- Parle UNIQUEMENT en espagnol dans ta réponse
-- Utilise des phrases TRÈS SIMPLES (5-8 mots maximum)
-- Utilise le présent principalement
-- Après ta phrase en espagnol, ajoute sur une nouvelle ligne: "FR: [traduction en français]"
-- Pose des questions simples pour encourager la conversation
-- Sois naturel et amical
+RÈGLES STRICTES (OBLIGATOIRES):
+- Réponds UNIQUEMENT en espagnol
+- 1 ou 2 phrases très simples (5–8 mots max)
+- Temps présent seulement
+- APRÈS chaque réponse en espagnol, ajoute TOUJOURS:
+FR: traduction française
+- Pose une question simple
 
-Format de réponse:
-[Ta phrase en espagnol]
-FR: [Traduction française]
+Format OBLIGATOIRE:
+[Phrase en espagnol]
+FR: [traduction française]
+`,
 
-Exemple:
-Hola. Me gusta el fútbol. ¿Y tú?
-FR: Bonjour. J'aime le football. Et toi?`,
-      
-      2: `Tu es Carlos, un professeur d'espagnol pour niveau intermédiaire.
+      2: `
+Tu es Carlos, professeur d'espagnol intermédiaire.
 
-RÈGLES IMPORTANTES:
-- Parle UNIQUEMENT en espagnol dans ta réponse
-- Utilise des phrases de complexité moyenne
-- Introduis le passé et le futur occasionnellement
-- Ajoute la traduction française seulement 50% du temps
-- Quand tu traduis, ajoute "FR: [traduction]" sur une nouvelle ligne
-- Encourage des conversations plus longues
+Règles:
+- Espagnol uniquement
+- Phrases moyennes
+- Présent + passé/futur parfois
+- Traduction FR une fois sur deux
+`,
+      3: `
+Tu es Carlos, professeur d'espagnol avancé.
 
-Format avec traduction (50% du temps):
-[Ta phrase en espagnol]
-FR: [Traduction]
-
-Format sans traduction (50% du temps):
-[Ta phrase en espagnol seulement]`,
-      
-      3: `Tu es Carlos, un professeur d'espagnol pour niveau avancé.
-
-RÈGLES IMPORTANTES:
-- Parle UNIQUEMENT en espagnol
-- Utilise un vocabulaire riche et varié
-- N'ajoute JAMAIS de traduction française
-- Utilise tous les temps verbaux
-- Discute de sujets variés et intéressants
-- Sois naturel comme dans une vraie conversation`
+Règles:
+- Espagnol uniquement
+- Aucun français
+- Vocabulaire riche
+- Conversation naturelle
+`
     };
 
     const englishPrompts = {
-      1: `Tu es Sarah, une professeure d'anglais patiente et encourageante pour débutants.
+  1: `
+You are Sarah, an English teacher for absolute beginners.
 
-RÈGLES IMPORTANTES:
-- Parle UNIQUEMENT en anglais dans ta réponse
-- Utilise des phrases TRÈS SIMPLES (5-8 mots maximum)
-- Utilise le présent principalement
-- Après ta phrase en anglais, ajoute sur une nouvelle ligne: "FR: [traduction en français]"
-- Pose des questions simples pour encourager la conversation
-- Sois naturelle et amicale
+STRICT RULES:
+- Respond ONLY in English
+- 1 or 2 very short sentences (5–8 words)
+- Present tense only
+- AFTER the English sentence, ALWAYS add:
+FR: French translation
+- Ask a simple question
 
-Format de réponse:
-[Ta phrase en anglais]
-FR: [Traduction française]
+MANDATORY FORMAT:
+[English sentence]
+FR: [French translation]
+`,
 
-Exemple:
-Hello. I like soccer. And you?
-FR: Bonjour. J'aime le football. Et toi?`,
-      
-      2: `Tu es Sarah, une professeure d'anglais pour niveau intermédiaire.
+      2: `
+You are Sarah, an intermediate English teacher.
 
-RÈGLES IMPORTANTES:
-- Parle UNIQUEMENT en anglais dans ta réponse
-- Utilise des phrases de complexité moyenne
-- Introduis le passé et le futur occasionnellement
-- Ajoute la traduction française seulement 50% du temps
-- Quand tu traduis, ajoute "FR: [traduction]" sur une nouvelle ligne
-- Encourage des conversations plus longues
+Rules:
+- English only
+- Medium-length sentences
+- Past/future sometimes
+- French translation only half the time
+`,
+      3: `
+You are Sarah, an advanced English teacher.
 
-Format avec traduction (50% du temps):
-[Ta phrase en anglais]
-FR: [Traduction]
-
-Format sans traduction (50% du temps):
-[Ta phrase en anglais seulement]`,
-      
-      3: `Tu es Sarah, une professeure d'anglais pour niveau avancé.
-
-RÈGLES IMPORTANTES:
-- Parle UNIQUEMENT en anglais
-- Utilise un vocabulaire riche et varié
-- N'ajoute JAMAIS de traduction française
-- Utilise tous les temps verbaux
-- Discute de sujets variés et intéressants
-- Sois naturelle comme dans une vraie conversation`
+Rules:
+- English only
+- No French
+- Natural conversation
+`
     };
 
-    const systemPrompts = language === 'spanish' ? spanishPrompts : englishPrompts;
+    const systemPrompt =
+      language === "spanish"
+        ? spanishPrompts[level] || spanishPrompts[1]
+        : englishPrompts[level] || englishPrompts[1];
 
-    // Appeler l'API Claude avec fetch natif (disponible dans Node 18+)
-    const response = await fetch('https://api.anthropic.com/v1/messages', {
-      method: 'POST',
+    /* ======================================================
+       HISTORIQUE LIMITÉ = MOINS CHER
+       ====================================================== */
+    const shortHistory = history.slice(-8);
+
+    /* ======================================================
+       APPEL CLAUDE (ANTHROPIC)
+       ====================================================== */
+    const response = await fetch("https://api.anthropic.com/v1/messages", {
+      method: "POST",
       headers: {
-        'Content-Type': 'application/json',
-        'x-api-key': ANTHROPIC_API_KEY,
-        'anthropic-version': '2023-06-01'
+        "Content-Type": "application/json",
+        "x-api-key": ANTHROPIC_API_KEY,
+        "anthropic-version": "2023-06-01"
       },
       body: JSON.stringify({
-        model: 'claude-sonnet-4-20250514',
-        max_tokens: 1000,
-        system: systemPrompts[level] || systemPrompts[1],
-        messages: history
+        model: "claude-sonnet-4-20250514",
+        max_tokens: 250,
+        system: systemPrompt,
+        messages: shortHistory
       })
     });
 
     const data = await response.json();
 
-    if (data.content && data.content[0] && data.content[0].text) {
-      const aiResponse = data.content[0].text;
-      
-      // Parser la réponse pour extraire la langue cible et le français
-      const lines = aiResponse.trim().split('\n');
-      let targetLangText = '';
-      let french = '';
-      
-      for (let line of lines) {
-        if (line.startsWith('FR:')) {
-          french = line.replace('FR:', '').trim();
-        } else if (line.trim()) {
-          targetLangText += (targetLangText ? ' ' : '') + line.trim();
-        }
-      }
-
-      const responseKey = language === 'spanish' ? 'spanish' : 'english';
-
-      return {
-        statusCode: 200,
-        headers: {
-          'Content-Type': 'application/json',
-          'Access-Control-Allow-Origin': '*'
-        },
-        body: JSON.stringify({
-          [responseKey]: targetLangText,
-          french: french
-        })
-      };
-    } else {
-      throw new Error('Invalid response from Claude API');
+    if (!data.content || !data.content[0]?.text) {
+      throw new Error("Invalid response from Claude");
     }
 
-  } catch (error) {
-    console.error('Error:', error);
+    /* ======================================================
+       PARSING (ESPAGNOL / ANGLAIS + FR)
+       ====================================================== */
+    const raw = data.content[0].text.trim().split("\n");
+
+    let target = "";
+    let french = "";
+
+    for (const line of raw) {
+      if (line.startsWith("FR:")) {
+        french = line.replace("FR:", "").trim();
+      } else {
+        target += (target ? " " : "") + line.trim();
+      }
+    }
+
+    const key = language === "spanish" ? "spanish" : "english";
+
+    return {
+      statusCode: 200,
+      headers: {
+        "Content-Type": "application/json",
+        "Access-Control-Allow-Origin": "*"
+      },
+      body: JSON.stringify({
+        [key]: target,
+        french
+      })
+    };
+
+  } catch (err) {
+    console.error(err);
     return {
       statusCode: 500,
-      body: JSON.stringify({
-        error: 'Failed to process request',
-        details: error.message
-      })
+      body: JSON.stringify({ error: err.message })
     };
   }
 };
