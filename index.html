@@ -325,17 +325,39 @@ async function startHandsFree() {
   source.connect(analyser);
 
   dataArray = new Uint8Array(analyser.fftSize);
-  loopVAD();
-}
-
-function rmsLevel() {
-  analyser.getByteTimeDomainData(dataArray);
-  let sum = 0;
-  for (let i = 0; i < dataArray.length; i++) {
-    const v = (dataArray[i] - 128) / 128;
-    sum += v * v;
+  
+    function loopVAD() {
+  // DEBUG: afficher l'état dans la barre de status
+  const level = rmsLevel();
+  const debugInfo = `VAD: ${level.toFixed(3)} | Rec: ${isRecording} | TTS: ${ttsSpeaking}`;
+  
+  if (useHandsFree && !ttsSpeaking) {
+    updateStatus(debugInfo);
   }
-  return Math.sqrt(sum / dataArray.length);
+
+  if (!useHandsFree || !vadEnabled || ttsSpeaking) {
+    setTimeout(loopVAD, VAD.tickMs);
+    return;
+  }
+
+  const speaking = level > VAD.threshold;
+
+  if (!isRecording) {
+    silenceMs = speaking ? silenceMs + VAD.tickMs : 0;
+    if (silenceMs >= VAD.startMs) {
+      silenceMs = 0;
+      startAutoRecording();
+      updateStatus('🎤 ENREGISTREMENT...');
+    }
+  } else {
+    silenceMs = !speaking ? silenceMs + VAD.tickMs : 0;
+    if (silenceMs >= VAD.stopMs) {
+      silenceMs = 0;
+      stopAutoRecordingAndSend().catch(console.error);
+    }
+  }
+
+  setTimeout(loopVAD, VAD.tickMs);
 }
 
 function startAutoRecording() {
