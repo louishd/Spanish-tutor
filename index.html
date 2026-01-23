@@ -439,7 +439,7 @@
         alert('Erreur fetch: ' + err.message);
         throw err;
     }
-
+}
         // ===== SpeechRecognition pour PC =====
         if ('webkitSpeechRecognition' in window || 'SpeechRecognition' in window) {
             const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
