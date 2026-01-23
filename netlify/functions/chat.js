@@ -96,7 +96,7 @@ Rules:
     /* ======================================================
        HISTORIQUE LIMITÉ = MOINS CHER
        ====================================================== */
-    const shortHistory = history.slice(-8);
+    const shortHistory = history.slice(-4);
 
     /* ======================================================
        APPEL CLAUDE (ANTHROPIC)
@@ -109,7 +109,7 @@ Rules:
         "anthropic-version": "2023-06-01"
       },
       body: JSON.stringify({
-        model: "claude-sonnet-4-20250514",
+        model: "claude-haiku-4-5-20250929",
         max_tokens: 250,
         system: systemPrompt,
         messages: shortHistory
