@@ -5,49 +5,41 @@ exports.handler = async (event) => {
     return { statusCode: 405, body: "Method Not Allowed" };
   }
 
+  const OPENAI_API_KEY = process.env.OPENAI_API_KEY;
+  if (!OPENAI_API_KEY) {
+    return { statusCode: 500, body: JSON.stringify({ error: "OPENAI_API_KEY not set" }) };
+  }
+
   try {
-    const OPENAI_API_KEY = process.env.OPENAI_API_KEY;
-    if (!OPENAI_API_KEY) {
-      return { statusCode: 500, body: JSON.stringify({ error: "OPENAI_API_KEY not set" }) };
+    const result = await parseMultipart(event);
+    
+    if (!result.fileBuffer || result.fileBuffer.length === 0) {
+      return { 
+        statusCode: 400, 
+        body: JSON.stringify({ error: "No audio file received" }) 
+      };
     }
 
-    const { fileBuffer, filename, language, mimeType } = await parseMultipart(event);
+    // Déterminer l'extension
+    let ext = 'mp4';
+    if (result.mimeType && result.mimeType.includes('webm')) ext = 'webm';
+    if (result.mimeType && result.mimeType.includes('wav')) ext = 'wav';
 
-    // Choisir la bonne extension selon le format
-    let ext = 'webm';
-    if (mimeType && mimeType.includes('mp4')) {
-      ext = 'mp4';
-    } else if (mimeType && mimeType.includes('wav')) {
-      ext = 'wav';
-    }
-
+    // Créer le FormData pour OpenAI
     const formData = new FormData();
-    formData.append('file', new Blob([fileBuffer], { type: mimeType }), `audio.${ext}`);
+    formData.append('file', new Blob([result.fileBuffer]), `audio.${ext}`);
     formData.append('model', 'whisper-1');
-    if (language) {
-      formData.append('language', language);
+    if (result.language) {
+      formData.append('language', result.language);
     }
 
     const response = await fetch("https://api.openai.com/v1/audio/transcriptions", {
       method: "POST",
-      headers: {
-        Authorization: `Bearer ${OPENAI_API_KEY}`,
-      },
+      headers: { Authorization: `Bearer ${OPENAI_API_KEY}` },
       body: formData,
     });
 
     const data = await response.json();
-
-    // Log pour debug
-    console.log("Whisper response:", JSON.stringify(data));
-
-    if (data.error) {
-      return {
-        statusCode: 400,
-        headers: { "Content-Type": "application/json", "Access-Control-Allow-Origin": "*" },
-        body: JSON.stringify({ error: data.error.message || "Whisper error" }),
-      };
-    }
 
     return {
       statusCode: 200,
@@ -55,11 +47,10 @@ exports.handler = async (event) => {
         "Content-Type": "application/json",
         "Access-Control-Allow-Origin": "*"
       },
-      body: JSON.stringify({ text: data.text || "" }),
+      body: JSON.stringify({ text: data.text || "", error: data.error || null }),
     };
 
   } catch (error) {
-    console.error("Transcription error:", error);
     return {
       statusCode: 500,
       body: JSON.stringify({ error: error.message }),
@@ -69,33 +60,25 @@ exports.handler = async (event) => {
 
 function parseMultipart(event) {
   return new Promise((resolve, reject) => {
+    const result = { fileBuffer: null, filename: null, language: null, mimeType: null };
+    
     const busboy = Busboy({ 
-      headers: { 'content-type': event.headers['content-type'] } 
+      headers: { 'content-type': event.headers['content-type'] || event.headers['Content-Type'] } 
     });
-
-    let fileBuffer = null;
-    let filename = null;
-    let language = null;
-    let mimeType = null;
 
     busboy.on('file', (fieldname, file, info) => {
       const chunks = [];
-      filename = info.filename;
-      mimeType = info.mimeType;
-      file.on('data', (chunk) => chunks.push(chunk));
-      file.on('end', () => {
-        fileBuffer = Buffer.concat(chunks);
-      });
+      result.filename = info.filename;
+      result.mimeType = info.mimeType;
+      file.on('data', chunk => chunks.push(chunk));
+      file.on('end', () => { result.fileBuffer = Buffer.concat(chunks); });
     });
 
-    busboy.on('field', (fieldname, val) => {
-      if (fieldname === 'language') language = val;
+    busboy.on('field', (name, val) => {
+      if (name === 'language') result.language = val;
     });
 
-    busboy.on('finish', () => {
-      resolve({ fileBuffer, filename, language, mimeType });
-    });
-
+    busboy.on('finish', () => resolve(result));
     busboy.on('error', reject);
 
     const body = event.isBase64Encoded 
