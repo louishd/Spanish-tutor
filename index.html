@@ -496,7 +496,7 @@
                     updateStatus(teacherName + ' parle...');
 
                     const lang = currentLanguage === 'spanish' ? 'es-ES' : 'en-US';
-                    speakText(data[responseKey], lang, 0.75);
+                    speakText(data[responseKey], lang, 0.6);
                 } else {
                     updateStatus('Erreur de connexion');
                     console.error('Erreur API:', data);
