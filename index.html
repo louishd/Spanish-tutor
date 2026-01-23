@@ -302,7 +302,7 @@
         let silenceMs = 0;
 
         // Réglages VAD (détection voix)
-        const VAD = { threshold: 0.02, startMs: 200, stopMs: 2000, tickMs: 50 };
+        const VAD = { threshold: 0.01, startMs: 100, stopMs: 2000, tickMs: 50 };
 
         function unlockTTS(lang = "es-ES") {
             speechSynthesis.getVoices();
