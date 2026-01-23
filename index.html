@@ -414,31 +414,16 @@
             setTimeout(loopVAD, VAD.tickMs);
         }
 
-       async function transcribeBlob(blob) {
-    // DEBUG
-    alert('Envoi audio: ' + blob.size + ' bytes, type: ' + blob.type);
-    
+     async function transcribeBlob(blob) {
     const fd = new FormData();
     fd.append("file", blob, "speech.webm");
     fd.append("language", currentLanguage === "spanish" ? "es" : "en");
 
-    try {
-        const r = await fetch("/.netlify/functions/transcribe", { method: "POST", body: fd });
-        
-        // DEBUG
-        alert('Réponse status: ' + r.status);
-        
-        const data = await r.json();
-        
-        // DEBUG
-        alert('Réponse: ' + JSON.stringify(data));
-        
-        if (!r.ok) throw new Error(data.error || 'Erreur serveur');
-        return data.text || "";
-    } catch (err) {
-        alert('Erreur fetch: ' + err.message);
-        throw err;
-    }
+    const r = await fetch("/.netlify/functions/transcribe", { method: "POST", body: fd });
+    if (!r.ok) throw new Error(await r.text());
+    const data = await r.json();
+    return data.text || "";
+     }
 }
         // ===== SpeechRecognition pour PC =====
         if ('webkitSpeechRecognition' in window || 'SpeechRecognition' in window) {
