@@ -11,10 +11,18 @@ exports.handler = async (event) => {
       return { statusCode: 500, body: JSON.stringify({ error: "OPENAI_API_KEY not set" }) };
     }
 
-    const { fileBuffer, filename, language } = await parseMultipart(event);
+    const { fileBuffer, filename, language, mimeType } = await parseMultipart(event);
+
+    // Choisir la bonne extension selon le format
+    let ext = 'webm';
+    if (mimeType && mimeType.includes('mp4')) {
+      ext = 'mp4';
+    } else if (mimeType && mimeType.includes('wav')) {
+      ext = 'wav';
+    }
 
     const formData = new FormData();
-    formData.append('file', new Blob([fileBuffer]), filename || 'audio.webm');
+    formData.append('file', new Blob([fileBuffer], { type: mimeType }), `audio.${ext}`);
     formData.append('model', 'whisper-1');
     if (language) {
       formData.append('language', language);
@@ -29,6 +37,17 @@ exports.handler = async (event) => {
     });
 
     const data = await response.json();
+
+    // Log pour debug
+    console.log("Whisper response:", JSON.stringify(data));
+
+    if (data.error) {
+      return {
+        statusCode: 400,
+        headers: { "Content-Type": "application/json", "Access-Control-Allow-Origin": "*" },
+        body: JSON.stringify({ error: data.error.message || "Whisper error" }),
+      };
+    }
 
     return {
       statusCode: 200,
@@ -57,10 +76,12 @@ function parseMultipart(event) {
     let fileBuffer = null;
     let filename = null;
     let language = null;
+    let mimeType = null;
 
     busboy.on('file', (fieldname, file, info) => {
       const chunks = [];
       filename = info.filename;
+      mimeType = info.mimeType;
       file.on('data', (chunk) => chunks.push(chunk));
       file.on('end', () => {
         fileBuffer = Buffer.concat(chunks);
@@ -72,7 +93,7 @@ function parseMultipart(event) {
     });
 
     busboy.on('finish', () => {
-      resolve({ fileBuffer, filename, language });
+      resolve({ fileBuffer, filename, language, mimeType });
     });
 
     busboy.on('error', reject);
@@ -84,4 +105,3 @@ function parseMultipart(event) {
     busboy.end(body);
   });
 }
-
